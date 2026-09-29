@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Planificación de CPU</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .gantt-container {
+            overflow-x: auto;
+            max-width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .gantt-table {
+            border-collapse: collapse;
+            width: 100%;
+            min-width: max-content;
+            background-color: white;
+        }
+        .gantt-table th, .gantt-table td {
+            border: 1px solid #e5e7eb;
+            padding: 6px 12px;
+            text-align: center;
+            font-size: 14px;
+            min-width: 30px;
+            height: 35px;
+        }
+        .gantt-table th.sticky-col, .gantt-table td.sticky-col {
+            position: sticky;
+            left: 0;
+            z-index: 10;
+            font-weight: bold;
+            border-right: 2px solid #94a3b8;
+            min-width: 120px;
+        }
+        .gantt-table th.sticky-top {
+            background-color: #93c5fd;
+            color: #1e3a8a;
+            border-bottom: 2px solid #60a5fa;
+        }
+        .gantt-table th.sticky-top.sticky-col {
+            background-color: #60a5fa; 
+            color: white;
+            z-index: 12;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 p-6 font-sans">
+
+    <div class="max-w-6xl mx-auto">
+        <h1 class="text-3xl font-bold mb-6 text-blue-600 text-center">Simulador de Planificación de CPU</h1>
+
+        <!-- Formulario de Entrada -->
+        <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+            <h2 class="text-xl font-semibold mb-4 border-b pb-2">Configuración de Procesos</h2>
+            
+            <div class="overflow-x-auto mb-4">
+                <table class="w-full text-sm text-left text-gray-500" id="inputTable">
+                    <thead class="text-xs text-gray-700 uppercase bg-gray-100">
+                        <tr>
+                            <th class="px-4 py-2">Proceso</th>
+                            <th class="px-4 py-2">T. Llegada</th>
+                            <th class="px-4 py-2">T. CPU (Ráfaga)</th>
+                            <th class="px-4 py-2">Prioridades</th>
+                            <th class="px-4 py-2">Color</th>
+                            <th class="px-4 py-2">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="processBody">
+                        <tr class="border-b">
+                            <td class="px-4 py-2"><input type="text" value="P1" class="border p-1 w-full rounded"></td>
+                            <td class="px-4 py-2"><input type="number" value="0" class="border p-1 w-full rounded"></td>
+                            <td class="px-4 py-2"><input type="number" value="8" class="border p-1 w-full rounded"></td>
+                            <td class="px-4 py-2"><input type="number" value="1" class="border p-1 w-full rounded"></td>
+                            <td class="px-4 py-2"><input type="color" value="#6fa8dc" class="h-8 w-full cursor-pointer"></td>
+                            <td class="px-4 py-2"><button onclick="removeRow(this)" class="text-red-500 font-bold">X</button></td>
+                        </tr>
+                        <tr class="border-b">
+                            <td class="px-4 py-2"><input type="text" value="P2" class="border p-1 w-full rounded"></td>
+                            <td class="px-4 py-2"><input type="number" value="1" class="border p-1 w-full rounded"></td>
+                            <td class="px-4 py-2"><input type="number" value="5" class="border p-1 w-full rounded"></td>
+                            <td class="px-4 py-2"><input type="number" value="1" class="border p-1 w-full rounded"></td>
+                            <td class="px-4 py-2"><input type="color" value="#f6b26b" class="h-8 w-full cursor-pointer"></td>
+                            <td class="px-4 py-2"><button onclick="removeRow(this)" class="text-red-500 font-bold">X</button></td>
+                        </tr>
+                        <tr class="border-b">
+                            <td class="px-4 py-2"><input type="text" value="P3" class="border p-1 w-full rounded"></td>
+                            <td class="px-4 py-2"><input type="number" value="1" class="border p-1 w-full rounded"></td>
+                            <td class="px-4 py-2"><input type="number" value="4" class="border p-1 w-full rounded"></td>
+                            <td class="px-4 py-2"><input type="number" value="2" class="border p-1 w-full rounded"></td>
+                            <td class="px-4 py-2"><input type="color" value="#a3a3a3" class="h-8 w-full cursor-pointer"></td>
+                            <td class="px-4 py-2"><button onclick="removeRow(this)" class="text-red-500 font-bold">X</button></td>
+                        </tr>
+                        <tr class="border-b">
+                            <td class="px-4 py-2"><input type="text" value="P4" class="border p-1 w-full rounded"></td>
+                            <td class="px-4 py-2"><input type="number" value="2" class="border p-1 w-full rounded"></td>
+                            <td class="px-4 py-2"><input type="number" value="4" class="border p-1 w-full rounded"></td>
+                            <td class="px-4 py-2"><input type="number" value="2" class="border p-1 w-full rounded"></td>
+                            <td class="px-4 py-2"><input type="color" value="#ffc000" class="h-8 w-full cursor-pointer"></td>
+                            <td class="px-4 py-2"><button onclick="removeRow(this)" class="text-red-500 font-bold">X</button></td>
+                        </tr>
+                        <tr class="border-b">
+                            <td class="px-4 py-2"><input type="text" value="P5" class="border p-1 w-full rounded"></td>
+                            <td class="px-4 py-2"><input type="number" value="2" class="border p-1 w-full rounded"></td>
+                            <td class="px-4 py-2"><input type="number" value="3" class="border p-1 w-full rounded"></td>
+                            <td class="px-4 py-2"><input type="number" value="1" class="border p-1 w-full rounded"></td>
+                            <td class="px-4 py-2"><input type="color" value="#70ad47" class="h-8 w-full cursor-pointer"></td>
+                            <td class="px-4 py-2"><button onclick="removeRow(this)" class="text-red-500 font-bold">X</button></td>
+                        </tr>
+                        <tr class="border-b">
+                            <td class="px-4 py-2"><input type="text" value="P6" class="border p-1 w-full rounded"></td>
+                            <td class="px-4 py-2"><input type="number" value="3" class="border p-1 w-full rounded"></td>
+                            <td class="px-4 py-2"><input type="number" value="6" class="border p-1 w-full rounded"></td>
+                            <td class="px-4 py-2"><input type="number" value="3" class="border p-1 w-full rounded"></td>
+                            <td class="px-4 py-2"><input type="color" value="#7030a0" class="h-8 w-full cursor-pointer"></td>
+                            <td class="px-4 py-2"><button onclick="removeRow(this)" class="text-red-500 font-bold">X</button></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="flex justify-between items-center mt-4">
+                <button onclick="addRow()" class="bg-gray-200 text-gray-800 px-4 py-2 rounded hover:bg-gray-300 font-medium">+ Agregar Proceso</button>
+                <div class="flex items-center space-x-2">
+                    <label class="font-semibold">Quantum:</label>
+                    <input type="number" id="quantum" value="2" class="border p-2 w-20 rounded text-center">
+                </div>
+                <button onclick="calcularTodos()" class="bg-blue-600 text-white px-6 py-2 rounded shadow hover:bg-blue-700 font-bold">Calcular Todo</button>
+            </div>
+        </div>
+
+        <!-- Contenedor de Resultados -->
+        <div id="resultadosContainer" class="space-y-12"></div>
+
+    </div>
+
+    <script>
+        function getContrastYIQ(hexcolor){
+            hexcolor = hexcolor.replace("#", "");
+            let r = parseInt(hexcolor.substr(0,2),16);
+            let g = parseInt(hexcolor.substr(2,2),16);
+            let b = parseInt(hexcolor.substr(4,2),16);
+            let yiq = ((r*299)+(g*587)+(b*114))/1000;
+            return (yiq >= 128) ? 'black' : 'white';
+        }
+
+        const defaultColors = ['#f44336', '#e91e63', '#9c27b0', '#673ab7', '#3f51b5', '#2196f3', '#03a9f4', '#00bcd4', '#009688', '#4caf50'];
+        let colorIndex = 6;
+
+        function addRow() {
+            const tbody = document.getElementById("processBody");
+            const rowCount = tbody.children.length + 1;
+            const color = defaultColors[colorIndex % defaultColors.length];
+            colorIndex++;
+            
+            const tr = document.createElement("tr");
+            tr.className = "border-b";
+            tr.innerHTML = `
+                <td class="px-4 py-2"><input type="text" value="P${rowCount}" class="border p-1 w-full rounded"></td>
+                <td class="px-4 py-2"><input type="number" value="0" class="border p-1 w-full rounded"></td>
+                <td class="px-4 py-2"><input type="number" value="1" class="border p-1 w-full rounded"></td>
+                <td class="px-4 py-2"><input type="number" value="1" class="border p-1 w-full rounded"></td>
+                <td class="px-4 py-2"><input type="color" value="${color}" class="h-8 w-full cursor-pointer"></td>
+                <td class="px-4 py-2"><button onclick="removeRow(this)" class="text-red-500 font-bold">X</button></td>
+            `;
+            tbody.appendChild(tr);
+        }
+
+        function removeRow(btn) {
+            btn.closest("tr").remove();
+        }
+
+        function getProcesses() {
+            const rows = document.querySelectorAll("#processBody tr");
+            let procs = [];
+            rows.forEach((row) => {
+                const inputs = row.querySelectorAll("input");
+                procs.push({
+                    name: inputs[0].value,
+                    arrival: parseInt(inputs[1].value) || 0,
+                    burst: parseInt(inputs[2].value) || 1,
+                    priority: parseInt(inputs[3].value) || 1,
+                    color: inputs[4].value
+                });
+            });
+            return procs;
+        }
+
+        // Se agregó el parámetro opcional showPriority para renderizar o no la columna
+        function renderResults(title, results, gantt, procs, containerId, showPriority = false) {
+            const maxTime = gantt.length > 0 ? Math.max(...gantt.map(g => g.end)) : 0;
+            let html = `<div class="bg-white p-6 rounded-lg shadow-md border-t-4 border-blue-500 mb-8">
+                            <h2 class="text-2xl font-bold mb-4 text-gray-800">${title}</h2>`;
+
+            // Tabla de Resultados
+            html += `<div class="overflow-x-auto mb-6">
+                        <table class="w-full text-sm text-left">
+                            <thead class="bg-gray-100 text-gray-700 uppercase">
+                                <tr>
+                                    <th class="px-4 py-2 border">Proceso</th>
+                                    <th class="px-4 py-2 border">T. Llegada</th>
+                                    <th class="px-4 py-2 border">T. CPU</th>
+                                    ${showPriority ? '<th class="px-4 py-2 border">Prioridades</th>' : ''}
+                                    <th class="px-4 py-2 border text-blue-700">T. Finalización</th>
+                                    <th class="px-4 py-2 border text-green-700">T. Sistema</th>
+                                    <th class="px-4 py-2 border text-red-700">T. Espera</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
+            
+            let sumTat = 0, sumWt = 0;
+            let tableResults = [...results].sort((a,b) => a.name.localeCompare(b.name));
+            
+            tableResults.forEach(r => {
+                sumTat += r.tat;
+                sumWt += r.wt;
+                html += `<tr class="border-b">
+                            <td class="px-4 py-2 border font-bold" style="color: ${r.color}">${r.name}</td>
+                            <td class="px-4 py-2 border">${r.arrival}</td>
+                            <td class="px-4 py-2 border">${r.burst}</td>
+                            ${showPriority ? `<td class="px-4 py-2 border font-semibold">${r.priority}</td>` : ''}
+                            <td class="px-4 py-2 border font-semibold">${r.ct}</td>
+                            <td class="px-4 py-2 border">${r.tat}</td>
+                            <td class="px-4 py-2 border">${r.wt}</td>
+                         </tr>`;
+            });
+
+            let n = results.length || 1;
+            let colspanValue = showPriority ? 5 : 4; // Ajustar el colspan si se muestra la prioridad
+            html += `<tr class="bg-gray-50 font-bold">
+                        <td colspan="${colspanValue}" class="px-4 py-2 border text-right">PROMEDIOS:</td>
+                        <td class="px-4 py-2 border text-green-700">${(sumTat/n).toFixed(2)}</td>
+                        <td class="px-4 py-2 border text-red-700">${(sumWt/n).toFixed(2)}</td>
+                     </tr></tbody></table></div>`;
+
+            // Diagrama de Gantt
+            html += `<h3 class="text-lg font-semibold mb-2">Diagrama de Gantt</h3>
+                     <div class="gantt-container">
+                        <table class="gantt-table">
+                            <thead>
+                                <tr><th class="sticky-col sticky-top">Proc / Tiempo</th>`;
+            for (let i = 0; i < maxTime; i++) {
+                html += `<th class="sticky-top w-8">${i}</th>`;
+            }
+            html += `</tr></thead><tbody>`;
+
+            procs.forEach(p => {
+                let pColor = p.color;
+                let textColor = getContrastYIQ(pColor);
+                html += `<tr><td class="sticky-col" style="background-color: ${pColor}; color: ${textColor}"><b>${p.name}</b></td>`;
+                
+                let currentT = 0;
+                let segments = gantt.filter(g => g.name === p.name).sort((a, b) => a.start - b.start);
+                
+                segments.forEach(seg => {
+                    if (seg.start > currentT) {
+                        html += `<td colspan="${seg.start - currentT}"></td>`;
+                    }
+                    html += `<td colspan="${seg.end - seg.start}" style="background-color: ${pColor}; color: ${textColor}"><b>${p.name}</b></td>`;
+                    currentT = seg.end;
+                });
+                
+                if (currentT < maxTime) {
+                    html += `<td colspan="${maxTime - currentT}"></td>`;
+                }
+                html += `</tr>`;
+            });
+
+            html += `</tbody></table></div></div>`;
+            document.getElementById(containerId).innerHTML += html;
+        }
+
+        // ================= ALGORITMOS =================
+
+        function calcFIFO(procs) {
+            let p = JSON.parse(JSON.stringify(procs)).sort((a, b) => a.arrival - b.arrival);
+            let time = 0, results = [], gantt = [];
+            
+            p.forEach(proc => {
+                if (time < proc.arrival) time = proc.arrival;
+                let start = time;
+                time += proc.burst;
+                gantt.push({name: proc.name, start: start, end: time});
+                
+                let tat = time - proc.arrival;
+                let wt = tat - proc.burst;
+                results.push({...proc, ct: time, tat, wt});
+            });
+            return { results, gantt };
+        }
+
+        function calcSJF(procs) {
+            let p = JSON.parse(JSON.stringify(procs));
+            let time = 0, completed = 0, n = p.length;
+            let results = [], gantt = [];
+            
+            while (completed < n) {
+                let available = p.filter(x => x.arrival <= time && !x.done);
+                if (available.length === 0) {
+                    time++;
+                    continue;
+                }
+                available.sort((a, b) => a.burst - b.burst || a.arrival - b.arrival);
+                let proc = available[0];
+                
+                let start = time;
+                time += proc.burst;
+                gantt.push({name: proc.name, start, end: time});
+                
+                proc.done = true;
+                let tat = time - proc.arrival;
+                let wt = tat - proc.burst;
+                results.push({...proc, ct: time, tat, wt});
+                completed++;
+            }
+            return { results, gantt };
+        }
+
+        function calcPriority(procs) {
+            let p = JSON.parse(JSON.stringify(procs));
+            let time = 0, completed = 0, n = p.length;
+            let results = [], gantt = [];
+            
+            while (completed < n) {
+                let available = p.filter(x => x.arrival <= time && !x.done);
+                if (available.length === 0) {
+                    time++;
+                    continue;
+                }
+                available.sort((a, b) => a.priority - b.priority || a.arrival - b.arrival);
+                let proc = available[0];
+                
+                let start = time;
+                time += proc.burst;
+                gantt.push({name: proc.name, start, end: time});
+                
+                proc.done = true;
+                let tat = time - proc.arrival;
+                let wt = tat - proc.burst;
+                results.push({...proc, ct: time, tat, wt});
+                completed++;
+            }
+            return { results, gantt };
+        }
+
+        function calcRR(procs, q) {
+            let p = JSON.parse(JSON.stringify(procs)).map(x => ({...x, rem: x.burst}));
+            p.sort((a, b) => a.arrival - b.arrival); 
+            
+            let time = 0, completed = 0, n = p.length;
+            let queue = [], inQueue = new Set();
+            let results = [], gantt = [];
+            
+            if(p.length > 0 && time < p[0].arrival) time = p[0].arrival;
+            queue.push(p[0]);
+            inQueue.add(p[0].name);
+            
+            while (completed < n) {
+                if (queue.length > 0) {
+                    let proc = queue.shift();
+                    let start = time;
+                    let exec = Math.min(proc.rem, q);
+                    
+                    time += exec;
+                    proc.rem -= exec;
+                    gantt.push({name: proc.name, start, end: time});
+                    
+                    p.forEach(x => {
+                        if (x.arrival <= time && !inQueue.has(x.name) && x.rem > 0) {
+                            queue.push(x);
+                            inQueue.add(x.name);
+                        }
+                    });
+                    
+                    if (proc.rem > 0) {
+                        queue.push(proc);
+                    } else {
+                        completed++;
+                        let tat = time - proc.arrival;
+                        let wt = tat - proc.burst;
+                        results.push({...proc, ct: time, tat, wt});
+                    }
+                } else {
+                    time++;
+                    p.forEach(x => {
+                        if (x.arrival <= time && !inQueue.has(x.name) && x.rem > 0) {
+                            queue.push(x);
+                            inQueue.add(x.name);
+                        }
+                    });
+                }
+            }
+            return { results, gantt };
+        }
+
+        // ================= CONTROLADOR PRINCIPAL =================
+        function calcularTodos() {
+            const container = document.getElementById("resultadosContainer");
+            container.innerHTML = ""; 
+            
+            const procs = getProcesses();
+            if(procs.length === 0) {
+                alert("Añade al menos un proceso.");
+                return;
+            }
+            const q = parseInt(document.getElementById("quantum").value) || 1;
+
+            // FCFS / FIFO
+            let rFIFO = calcFIFO(procs);
+            renderResults("First-In, First-Out (FIFO - No Expulsivo)", rFIFO.results, rFIFO.gantt, procs, "resultadosContainer");
+
+            // SJF
+            let rSJF = calcSJF(procs);
+            renderResults("Shortest Job First (SJF - No Expulsivo)", rSJF.results, rSJF.gantt, procs, "resultadosContainer");
+
+            // Prioridades (Aquí se pasa "true" al final para que muestre la columna de prioridad)
+            let rPrio = calcPriority(procs);
+            renderResults("Prioridades (No Expulsivo)", rPrio.results, rPrio.gantt, procs, "resultadosContainer", true);
+
+            // Round Robin
+            let rRR = calcRR(procs, q);
+            renderResults(`Round Robin (Q = ${q})`, rRR.results, rRR.gantt, procs, "resultadosContainer");
+        }
+    </script>
+</body>
+</html>
